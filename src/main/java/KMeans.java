@@ -345,7 +345,7 @@ public class KMeans {
   }
 
   public static class KMeansSecondaryMapper
-      extends TableMapper<DoubleKeys, Text> {
+      extends TableMapper<DoubleKeys, DerivedArrayWritable> {
 
     HBaseHelper helper;
     //private static long lastTS = 0;
@@ -365,7 +365,6 @@ public class KMeans {
       String latString = new String(value.getValue(Bytes.toBytes("data"), Bytes.toBytes("lat")));
       String lngString = new String(value.getValue(Bytes.toBytes("data"), Bytes.toBytes("lng")));
       String city = new String(value.getValue(Bytes.toBytes("data"), Bytes.toBytes("city")));
-
       //helper = new HBaseHelper("Points");
       ArrayList<Result> points = helper.getValueFilteredSerilzibleFields(city, "city");
 
@@ -392,8 +391,10 @@ public class KMeans {
       if (minPoint == null)
         return;
       DoubleKeys key = new DoubleKeys(city, minPoint);
-      String val = new String(row.get());
-      context.write(key, new Text(val));
+      //String val = new String(row.get());
+      String[] val = {new String(row.get()), latString, lngString, Bytes.toString(value.getValue(Bytes.toBytes("data"), Bytes.toBytes("numOfCheckIn")))};
+      DerivedArrayWritable values = new DerivedArrayWritable(val);
+      context.write(key, values);
     }
   }
 
@@ -407,10 +408,10 @@ public class KMeans {
     }
   }
 
-  private static class KMeansSecondaryPartitioner extends Partitioner<DoubleKeys,Text> {
+  private static class KMeansSecondaryPartitioner extends Partitioner<DoubleKeys,DerivedArrayWritable> {
 
     @Override
-    public int getPartition(DoubleKeys key, Text value, int numReduceTasks) {
+    public int getPartition(DoubleKeys key, DerivedArrayWritable value, int numReduceTasks) {
       if (numReduceTasks == 0)
         return 0;
       return (key.city.hashCode() & Integer.MAX_VALUE) % numReduceTasks;
@@ -483,7 +484,7 @@ public class KMeans {
   }
 
   public static class KMeansSecondaryReducer
-      extends Reducer<DoubleKeys,Text,NullWritable,Text> {
+      extends Reducer<DoubleKeys,DerivedArrayWritable,NullWritable,Text> {
 
     HBaseHelper helper = null;
     HBaseHelper pointsHelper = null;
@@ -551,7 +552,7 @@ public class KMeans {
       }
     }
 
-    public void reduce(DoubleKeys key, Iterable<Text> values,
+    public void reduce(DoubleKeys key, Iterable<DerivedArrayWritable> values,
                        Context context
     ) throws IOException, InterruptedException {
 
@@ -560,14 +561,15 @@ public class KMeans {
       ArrayList<Venue> venueList = new ArrayList<>();
 
       // Get all venues from HBase
-      Iterator<Text> iterator = values.iterator();
+      Iterator<DerivedArrayWritable> iterator = values.iterator();
       while (iterator.hasNext()) {
-        Text currentValue = iterator.next();
-        Result rs = helper.getOneRecord(currentValue.toString());
-        Double latitude = Double.parseDouble(Bytes.toString(rs.getValue(Bytes.toBytes("data"), Bytes.toBytes("lat"))));
-        Double longitude = Double.parseDouble(Bytes.toString(rs.getValue(Bytes.toBytes("data"), Bytes.toBytes("lng"))));
-        String id = Bytes.toString(rs.getValue(Bytes.toBytes("data"), Bytes.toBytes("id")));
-        Integer checkInNumber = Integer.parseInt(Bytes.toString(rs.getValue(Bytes.toBytes("data"), Bytes.toBytes("numOfCheckIn"))));
+        DerivedArrayWritable currentValue = iterator.next();
+        String[] valueStrings = currentValue.toStrings();
+        //Result rs = helper.getOneRecord(currentValue.toString());
+        Double latitude = Double.parseDouble(valueStrings[1]);
+        Double longitude = Double.parseDouble(valueStrings[2]);
+        String id = valueStrings[0];
+        Integer checkInNumber = Integer.parseInt(valueStrings[3]);
         venueList.add(new Venue(latitude, longitude, id, checkInNumber));
 
 //                Long ts = System.currentTimeMillis();
@@ -690,7 +692,7 @@ public class KMeans {
           scan,
           KMeansSecondaryMapper.class,
           DoubleKeys.class,
-          Text.class,
+          DerivedArrayWritable.class,
           Iteratejob);
 
       Iteratejob.setJarByClass(KMeans.class);

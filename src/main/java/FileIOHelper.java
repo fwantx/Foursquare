@@ -79,6 +79,8 @@ public class FileIOHelper {
 
     }
 
+
+
     public static void reset() throws IOException{
       reader.reset();
     }
@@ -106,7 +108,23 @@ public class FileIOHelper {
       }
       Files.write(file, output, Charset.forName("UTF-8"));
     }
+
+    public static void writeS3(String DataFilePath, List<List<String>> lines) throws IOException{
+      Path file = Paths.get(DataFilePath);
+      List<String> output = new ArrayList<>();
+      for (List<String> row:lines){
+        String line = "";
+        for (String field: row){
+          line += "\t" + field;
+        }
+        output.add(line.substring(1));
+      }
+      Files.write(file, output, Charset.forName("UTF-8"));
+    }
+
   }
+
+
 
 
   public static class CityInfoReader {
