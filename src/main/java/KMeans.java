@@ -652,7 +652,7 @@ public class KMeans {
     FileIOHelper.DataFileReader.openS3();
     cityTableProcess();
 
-    //if (created) {
+    if (created) {
     Job job1 = new Job(conf1, "KMeans");
 
     job1.setJarByClass(KMeans.class);
@@ -669,7 +669,7 @@ public class KMeans {
 
     if (!job1.waitForCompletion(true))
       System.exit(1);
-    //}
+    }
 
     HBaseHelper helper = new HBaseHelper("Venues");
     Integer MaxRound = 200, round = 0;
