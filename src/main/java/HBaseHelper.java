@@ -40,6 +40,7 @@ public class HBaseHelper {
 
   public HBaseHelper(String tableName) throws IOException{
     conf = HBaseConfiguration.create();
+    conf.setInt("hbase.regionserver.lease.period", 300000);
     this.tableName = tableName;
     //conf.addResource("/home/hadoop/hbase/conf/hbase-site.xml");
 
@@ -55,6 +56,7 @@ public class HBaseHelper {
   public static Boolean createTable(String tableName, String family)
       throws Exception {
     conf = HBaseConfiguration.create();
+    conf.setInt("hbase.regionserver.lease.period", 300000);
     //conf.addResource("/home/hadoop/hbase/conf/hbase-site.xml");
 
 //        Cluster cluster = new Cluster();

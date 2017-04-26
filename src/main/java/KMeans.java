@@ -652,7 +652,7 @@ public class KMeans {
     FileIOHelper.DataFileReader.openS3();
     cityTableProcess();
 
-    //if (created) {
+    if (created) {
     Job job1 = new Job(conf1, "KMeans");
 
     job1.setJarByClass(KMeans.class);
@@ -669,7 +669,7 @@ public class KMeans {
 
     if (!job1.waitForCompletion(true))
       System.exit(1);
-    //}
+    }
 
     HBaseHelper helper = new HBaseHelper("Venues");
     Integer MaxRound = 200, round = 0;
@@ -678,6 +678,7 @@ public class KMeans {
       round++;
       Configuration conf = new HBaseConfiguration();
       conf.setInt("mapreduce.task.timeout", 16000000);
+      conf.setInt("hbase.regionserver.lease.period", 300000);
       Scan scan = new Scan();
       scan.setCaching(500);
       scan.setCacheBlocks(false);
@@ -710,6 +711,7 @@ public class KMeans {
     scan.setCaching(500);
     scan.setCacheBlocks(false);
     conf.setInt("mapreduce.task.timeout", 16000000);
+    conf.setInt("hbase.regionserver.lease.period", 300000);
 
     Job Lastjob = new Job(conf, "Output");
 
