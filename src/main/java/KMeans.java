@@ -680,7 +680,7 @@ public class KMeans {
       conf.setInt("mapreduce.task.timeout", 16000000);
       conf.setInt("hbase.regionserver.lease.period", 300000);
       Scan scan = new Scan();
-      scan.setCaching(500);
+      scan.setCaching(100000);
       scan.setCacheBlocks(false);
 
       Job Iteratejob = new Job(conf, "Iterating");
@@ -708,7 +708,7 @@ public class KMeans {
 
     Configuration conf = new HBaseConfiguration();
     Scan scan = new Scan();
-    scan.setCaching(500);
+    scan.setCaching(100000);
     scan.setCacheBlocks(false);
     conf.setInt("mapreduce.task.timeout", 16000000);
     conf.setInt("hbase.regionserver.lease.period", 300000);
